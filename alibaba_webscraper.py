@@ -8,7 +8,7 @@ import time
 
 # Configuración del WebDriver
 driver = webdriver.Chrome()  # Cambia a tu navegador si es necesario
-url = "https://zzmuduo.en.alibaba.com/productgrouplist-812671707/Equipo_de_pollo.html"
+url = "https://zzmuduo.en.alibaba.com/productgrouplist-812671707-11/Chicken_Equipment.html?"
 driver.get(url)
 
 # Obtener cookies de Selenium
@@ -37,8 +37,8 @@ except Exception as e:
     print("No pop-up to dismiss.")
 
 # Crear directorio para guardar las imágenes
-if not os.path.exists('images'):
-    os.makedirs('images')
+if not os.path.exists('images_alibaba'):
+    os.makedirs('images_alibaba')
 
 page_number = 1
 
@@ -48,19 +48,28 @@ while True:
         EC.presence_of_all_elements_located((By.XPATH, "//img[@loading='lazy']"))
     )
 
+    #Esperar hasta que los elementos del album esten presentes
+    nombre_list = WebDriverWait(driver, 10).until(
+        EC.presence_of_all_elements_located((By.XPATH, "//a[contains(@class, 'title-link icbu-link-normal')]"))
+    )
+    
+
     # Comprobar si la variable albums tiene elementos
     if albums:
         print(f"Se encontraron {len(albums)} elementos en la página {page_number}.")
+
     else:
         print("No se encontraron elementos en esta página.")
 
     # Descargar imágenes
     for idx, album in enumerate(albums):
-        img_url = album.get_attribute('src')
-        img_data = session.get(img_url, headers=headers).content
-        with open(f'images/page_{page_number}_image_{idx}.jpg', 'wb') as img_file:
-            img_file.write(img_data)
-        print(f'Imagen {idx} de la página {page_number} descargada.')
+        for name in nombre_list:    
+            individual_name = name.get_attribute('title')
+            img_url = album.get_attribute('src')
+            img_data = session.get(img_url, headers=headers).content
+            with open(f'images_alibaba/{page_number}-{individual_name}.jpg', 'wb') as img_file:
+                img_file.write(img_data)
+            print(f'Imagen {idx} de la página {page_number} descargada.')
 
     # Intentar encontrar el botón "Siguiente" y hacer clic en él
     try:
@@ -74,5 +83,6 @@ while True:
         print("No se encontró un botón 'Siguiente' o ya no hay más páginas.")
         break
 
+time.sleep(180)
 # Cerrar el navegador
 driver.quit()
